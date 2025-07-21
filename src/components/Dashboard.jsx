@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
-import { LogOut, Plus, Download } from 'lucide-react'
+import { LogOut, Plus, Download, Upload } from 'lucide-react'
 import QuestionGenerator from './QuestionGenerator'
 import QuestionReview from './QuestionReview'
+import FileUpload from './FileUpload'
 
 export default function Dashboard({ session }) {
   const [activeTab, setActiveTab] = useState('generate')
@@ -57,6 +58,21 @@ export default function Dashboard({ session }) {
               Generate Questions
             </button>
             <button
+              onClick={() => setActiveTab('upload')}
+              style={{
+                padding: '12px 24px',
+                border: 'none',
+                background: activeTab === 'upload' ? '#3b82f6' : 'transparent',
+                color: activeTab === 'upload' ? 'white' : '#64748b',
+                borderRadius: '8px 8px 0 0',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              <Upload size={16} style={{ marginRight: '8px' }} />
+              Upload & Generate
+            </button>
+            <button
               onClick={() => setActiveTab('review')}
               style={{
                 padding: '12px 24px',
@@ -84,6 +100,10 @@ export default function Dashboard({ session }) {
 
         {activeTab === 'generate' && (
           <QuestionGenerator onQuestionsGenerated={handleQuestionsGenerated} />
+        )}
+        
+        {activeTab === 'upload' && (
+          <FileUpload onQuestionsGenerated={handleQuestionsGenerated} />
         )}
         
         {activeTab === 'review' && (

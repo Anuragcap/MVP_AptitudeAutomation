@@ -204,3 +204,18 @@ body {
   font-weight: 500;
   text-transform: uppercase;
 }
+
+.file-upload-area {
+  transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
+}
+
+.file-upload-area.drag-active {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
+  transform: scale(1.02);
+}
