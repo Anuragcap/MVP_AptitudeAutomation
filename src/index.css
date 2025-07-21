@@ -194,3 +194,13 @@ body {
   font-size: 24px;
   font-weight: 600;
 }
+
+.variant-badge {
+  font-size: 12px;
+  color: #8b5cf6;
+  background-color: #f3e8ff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}

@@ -69,6 +69,15 @@ export default function Dashboard({ session }) {
               }}
             >
               Review Questions ({generatedQuestions.length})
+              {generatedQuestions.length > 0 && (
+                <span style={{ 
+                  marginLeft: '8px', 
+                  fontSize: '11px', 
+                  opacity: '0.8' 
+                }}>
+                  ({generatedQuestions.filter(q => !q.isVariant).length} base + {generatedQuestions.filter(q => q.isVariant).length} variants)
+                </span>
+              )}
             </button>
           </div>
         </div>

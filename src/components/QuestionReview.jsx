@@ -4,7 +4,6 @@ import { Check, X, RefreshCw, Download, Eye, EyeOff } from 'lucide-react'
 
 export default function QuestionReview({ questions, onQuestionsUpdate }) {
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
-  const [showVariants, setShowVariants] = useState({})
 
   const toggleExpanded = (questionId) => {
     const newExpanded = new Set(expandedQuestions)
@@ -16,12 +15,7 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
     setExpandedQuestions(newExpanded)
   }
 
-  const toggleVariants = (questionId) => {
-    setShowVariants(prev => ({
-      ...prev,
-      [questionId]: !prev[questionId]
-    }))
-  }
+
 
   const updateQuestionStatus = (questionId, status) => {
     const updatedQuestions = questions.map(q => 
@@ -138,11 +132,13 @@ Return as JSON with this structure:
 
     // Create CSV content
     const csvContent = [
-      ['Topic', 'Subtopic', 'Difficulty', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Explanation'],
+      ['Topic', 'Subtopic', 'Difficulty', 'Type', 'Variant Number', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Explanation'],
       ...approvedQuestions.map(q => [
         q.topic,
         q.subtopic,
         q.difficulty,
+        q.isVariant ? 'Variant' : 'Base Question',
+        q.isVariant ? q.variantNumber : '',
         q.question,
         q.options[0],
         q.options[1],
@@ -215,7 +211,7 @@ Return as JSON with this structure:
             <div className="question-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontWeight: '600', color: '#374151' }}>
-                  Question {index + 1}
+                  {question.isVariant ? `Variant ${question.variantNumber}` : `Question ${index + 1}`}
                 </span>
                 <span className={`difficulty-badge difficulty-${question.difficulty}`}>
                   {question.difficulty}
@@ -223,6 +219,11 @@ Return as JSON with this structure:
                 <span style={{ fontSize: '14px', color: '#64748b' }}>
                   {question.topic} → {question.subtopic}
                 </span>
+                {question.isVariant && (
+                  <span className="variant-badge">
+                    VARIANT
+                  </span>
+                )}
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -267,38 +268,7 @@ Return as JSON with this structure:
               </div>
             )}
 
-            {/* Variants Section */}
-            {question.variants && question.variants.length > 0 && (
-              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                <button
-                  onClick={() => toggleVariants(question.id)}
-                  className="btn btn-secondary"
-                  style={{ marginBottom: '12px' }}
-                >
-                  {showVariants[question.id] ? 'Hide' : 'Show'} Variants ({question.variants.length})
-                </button>
-                
-                {showVariants[question.id] && (
-                  <div style={{ display: 'grid', gap: '12px' }}>
-                    {question.variants.map((variant, vIndex) => (
-                      <div key={variant.id} style={{ 
-                        padding: '12px', 
-                        backgroundColor: 'white', 
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0'
-                      }}>
-                        <p style={{ fontSize: '14px', marginBottom: '8px' }}>
-                          <strong>Variant {vIndex + 1}:</strong> {variant.question}
-                        </p>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>
-                          Correct: {variant.options[variant.correctAnswer]}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+
 
             <div className="question-actions">
               <button

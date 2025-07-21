@@ -5,7 +5,31 @@ import { Zap, Settings } from 'lucide-react'
 // Mock data for topics and subtopics
 const TOPICS = {
     'Quantitative Aptitude': [
-        'Number Systems'
+        'Number Systems',
+        'Percentages',
+        'Profit and Loss',
+        'Simple Interest',
+        'Compound Interest',
+        'Time and Work',
+        'Time and Distance',
+        'Ratio and Proportion',
+        'Mixtures and Alligations'
+    ],
+    'Logical Reasoning': [
+        'Blood Relations',
+        'Direction Sense',
+        'Coding-Decoding',
+        'Puzzles',
+        'Seating Arrangement',
+        'Syllogisms',
+        'Data Sufficiency'
+    ],
+    'Advanced Aptitude': [
+        'Probability',
+        'Permutations and Combinations',
+        'Geometry',
+        'Algebra',
+        'Trigonometry'
     ]
 }
 
@@ -132,26 +156,49 @@ Return the response as a JSON array with this exact structure:
             }
 
             // Transform AI response to our question format
-            const questions = parsedQuestions.map((q, index) => ({
-                id: `q_${Date.now()}_${index}`,
-                topic: config.topic,
-                subtopic: config.subtopic,
-                difficulty: q.difficulty,
-                question: q.question,
-                options: q.options,
-                correctAnswer: q.correctAnswer,
-                explanation: q.explanation,
-                status: 'pending',
-                variants: q.variants ? q.variants.map((v, vIndex) => ({
-                    id: `v_${Date.now()}_${index}_${vIndex}`,
-                    question: v.question,
-                    options: v.options,
-                    correctAnswer: v.correctAnswer,
-                    explanation: v.explanation
-                })) : []
-            }))
+            const allQuestions = []
+            
+            parsedQuestions.forEach((q, index) => {
+                // Add base question
+                const baseQuestion = {
+                    id: `q_${Date.now()}_${index}`,
+                    topic: config.topic,
+                    subtopic: config.subtopic,
+                    difficulty: q.difficulty,
+                    question: q.question,
+                    options: q.options,
+                    correctAnswer: q.correctAnswer,
+                    explanation: q.explanation,
+                    status: 'pending',
+                    isVariant: false,
+                    baseQuestionId: null,
+                    variantNumber: null
+                }
+                allQuestions.push(baseQuestion)
+                
+                // Add variants as separate reviewable questions
+                if (q.variants && config.generateVariants) {
+                    q.variants.forEach((v, vIndex) => {
+                        const variantQuestion = {
+                            id: `v_${Date.now()}_${index}_${vIndex}`,
+                            topic: config.topic,
+                            subtopic: config.subtopic,
+                            difficulty: q.difficulty,
+                            question: v.question,
+                            options: v.options,
+                            correctAnswer: v.correctAnswer,
+                            explanation: v.explanation,
+                            status: 'pending',
+                            isVariant: true,
+                            baseQuestionId: baseQuestion.id,
+                            variantNumber: vIndex + 1
+                        }
+                        allQuestions.push(variantQuestion)
+                    })
+                }
+            })
 
-            return questions
+            return allQuestions
 
         } catch (error) {
             console.error('OpenAI API Error:', error)
