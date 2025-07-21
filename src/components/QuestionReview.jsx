@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Check, X, RefreshCw, Download, Eye, EyeOff } from 'lucide-react'
+import { Check, X, RefreshCw, Download, Eye, EyeOff, Edit2, Save, XCircle } from 'lucide-react'
 
 export default function QuestionReview({ questions, onQuestionsUpdate }) {
   const [expandedQuestions, setExpandedQuestions] = useState(new Set())
+  const [editingQuestions, setEditingQuestions] = useState(new Set())
+  const [editData, setEditData] = useState({})
 
   const toggleExpanded = (questionId) => {
     const newExpanded = new Set(expandedQuestions)
@@ -15,7 +17,69 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
     setExpandedQuestions(newExpanded)
   }
 
+  const startEditing = (questionId) => {
+    const question = questions.find(q => q.id === questionId)
+    if (question) {
+      setEditData({
+        ...editData,
+        [questionId]: {
+          question: question.question,
+          options: [...question.options],
+          correctAnswer: question.correctAnswer,
+          explanation: question.explanation
+        }
+      })
+      setEditingQuestions(new Set([...editingQuestions, questionId]))
+    }
+  }
 
+  const cancelEditing = (questionId) => {
+    const newEditing = new Set(editingQuestions)
+    newEditing.delete(questionId)
+    setEditingQuestions(newEditing)
+    
+    const newEditData = { ...editData }
+    delete newEditData[questionId]
+    setEditData(newEditData)
+  }
+
+  const saveEditing = (questionId) => {
+    const editedData = editData[questionId]
+    if (!editedData) return
+
+    const updatedQuestions = questions.map(q => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            question: editedData.question,
+            options: editedData.options,
+            correctAnswer: editedData.correctAnswer,
+            explanation: editedData.explanation,
+            status: 'pending'
+          }
+        : q
+    )
+    
+    onQuestionsUpdate(updatedQuestions)
+    cancelEditing(questionId)
+    toast.success('Question updated successfully!')
+  }
+
+  const updateEditData = (questionId, field, value) => {
+    setEditData({
+      ...editData,
+      [questionId]: {
+        ...editData[questionId],
+        [field]: value
+      }
+    })
+  }
+
+  const updateOptionEditData = (questionId, optionIndex, value) => {
+    const currentOptions = [...editData[questionId].options]
+    currentOptions[optionIndex] = value
+    updateEditData(questionId, 'options', currentOptions)
+  }
 
   const updateQuestionStatus = (questionId, status) => {
     const updatedQuestions = questions.map(q => 
@@ -89,7 +153,6 @@ Return as JSON with this structure:
       const data = await response.json()
       const aiResponse = data.choices[0].message.content
 
-      // Parse the JSON response
       let newQuestionData
       try {
         const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim()
@@ -99,7 +162,6 @@ Return as JSON with this structure:
         throw new Error('Invalid JSON response from AI')
       }
 
-      // Update the question with new AI-generated content
       const updatedQuestions = questions.map(q => 
         q.id === questionId 
           ? { 
@@ -122,6 +184,34 @@ Return as JSON with this structure:
     }
   }
 
+  // Helper function to convert text to LaTeX format
+  const convertToLatex = (text) => {
+    if (!text) return text
+    
+    return text
+      .replace(/\b(\d+)\/(\d+)\b/g, '$\\frac{$1}{$2}$') // Fractions like 3/4 -> $\frac{3}{4}$
+      .replace(/\b(\d+)\^(\d+)\b/g, '$\\$1^{$2}$') // Powers like 2^3 -> $2^{3}$
+      .replace(/√(\d+)/g, '$\\sqrt{$1}$') // Square roots
+      .replace(/≤/g, '$\\leq$') // Less than or equal
+      .replace(/≥/g, '$\\geq$') // Greater than or equal
+      .replace(/×/g, '$\\times$') // Multiplication
+      .replace(/÷/g, '$\\div$') // Division
+      .replace(/π/g, '$\\pi$') // Pi
+      .replace(/∞/g, '$\\infty$') // Infinity
+      .replace(/±/g, '$\\pm$') // Plus minus
+      .replace(/∑/g, '$\\sum$') // Summation
+      .replace(/∫/g, '$\\int$') // Integral
+      .replace(/α/g, '$\\alpha$') // Alpha
+      .replace(/β/g, '$\\beta$') // Beta
+      .replace(/γ/g, '$\\gamma$') // Gamma
+      .replace(/θ/g, '$\\theta$') // Theta
+      .replace(/λ/g, '$\\lambda$') // Lambda
+      .replace(/μ/g, '$\\mu$') // Mu
+      .replace(/σ/g, '$\\sigma$') // Sigma
+      .replace(/Δ/g, '$\\Delta$') // Delta
+      .replace(/Ω/g, '$\\Omega$') // Omega
+  }
+
   const exportToGoogleSheets = () => {
     const approvedQuestions = questions.filter(q => q.status === 'approved')
     
@@ -130,27 +220,33 @@ Return as JSON with this structure:
       return
     }
 
-    // Create CSV content
+    // Create CSV content with new format and LaTeX conversion
     const csvContent = [
-      ['Topic', 'Subtopic', 'Difficulty', 'Type', 'Variant Number', 'Question', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer', 'Explanation'],
-      ...approvedQuestions.map(q => [
-        q.topic,
-        q.subtopic,
-        q.difficulty,
-        q.isVariant ? 'Variant' : 'Base Question',
-        q.isVariant ? q.variantNumber : '',
-        q.question,
-        q.options[0],
-        q.options[1],
-        q.options[2],
-        q.options[3],
-        q.options[q.correctAnswer],
-        q.explanation
+      ['S. No', 'Question Content', 'Option A', 'Option B', 'Option C', 'Option D', 'Explanation', 'Key', 'SUB TOPIC', 'Difficulty'],
+      ...approvedQuestions.map((q, index) => [
+        index + 1, // S. No
+        convertToLatex(q.question), // Question Content with LaTeX
+        convertToLatex(q.options[0]), // Option A with LaTeX
+        convertToLatex(q.options[1]), // Option B with LaTeX
+        convertToLatex(q.options[2]), // Option C with LaTeX
+        convertToLatex(q.options[3]), // Option D with LaTeX
+        convertToLatex(q.explanation), // Explanation with LaTeX
+        String.fromCharCode(65 + q.correctAnswer), // Key (A, B, C, D)
+        q.subtopic, // SUB TOPIC
+        q.difficulty.toUpperCase() // Difficulty
       ])
-    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    ].map(row => row.map(cell => {
+      // Properly escape CSV cells to handle special characters and LaTeX
+      const cellStr = String(cell || '')
+      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n') || cellStr.includes('$')) {
+        return `"${cellStr.replace(/"/g, '""')}"`
+      }
+      return cellStr
+    }).join(',')).join('\n')
 
-    // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' })
+    // Download CSV with UTF-8 BOM to handle special characters properly
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -158,7 +254,7 @@ Return as JSON with this structure:
     a.click()
     window.URL.revokeObjectURL(url)
     
-    toast.success(`Exported ${approvedQuestions.length} questions to CSV`)
+    toast.success(`Exported ${approvedQuestions.length} questions to CSV with LaTeX formatting`)
   }
 
   const getStatusCounts = () => {
@@ -244,58 +340,144 @@ Return as JSON with this structure:
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '12px' }}>
-                {question.question}
-              </p>
-              
-              <ul className="options-list">
-                {question.options.map((option, optIndex) => (
-                  <li key={optIndex} style={{ 
-                    fontWeight: optIndex === question.correctAnswer ? '600' : 'normal',
-                    color: optIndex === question.correctAnswer ? '#10b981' : '#374151'
-                  }}>
-                    {String.fromCharCode(65 + optIndex)}. {option}
-                    {optIndex === question.correctAnswer && ' ✓'}
-                  </li>
-                ))}
-              </ul>
+              {editingQuestions.has(question.id) ? (
+                // Editing Mode
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">Question:</label>
+                    <textarea
+                      className="form-input"
+                      value={editData[question.id]?.question || ''}
+                      onChange={(e) => updateEditData(question.id, 'question', e.target.value)}
+                      rows={3}
+                      style={{ resize: 'vertical' }}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Options:</label>
+                    {editData[question.id]?.options?.map((option, optIndex) => (
+                      <div key={optIndex} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ minWidth: '20px', fontWeight: '500' }}>
+                          {String.fromCharCode(65 + optIndex)}.
+                        </span>
+                        <input
+                          className="form-input"
+                          value={option}
+                          onChange={(e) => updateOptionEditData(question.id, optIndex, e.target.value)}
+                          style={{ flex: 1 }}
+                        />
+                        <input
+                          type="radio"
+                          name={`correct-${question.id}`}
+                          checked={editData[question.id]?.correctAnswer === optIndex}
+                          onChange={() => updateEditData(question.id, 'correctAnswer', optIndex)}
+                          title="Mark as correct answer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {expandedQuestions.has(question.id) && (
+                    <div className="form-group">
+                      <label className="form-label">Explanation:</label>
+                      <textarea
+                        className="form-input"
+                        value={editData[question.id]?.explanation || ''}
+                        onChange={(e) => updateEditData(question.id, 'explanation', e.target.value)}
+                        rows={4}
+                        style={{ resize: 'vertical' }}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Display Mode
+                <div>
+                  <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '12px' }}>
+                    {question.question}
+                  </p>
+                  
+                  <ul className="options-list">
+                    {question.options.map((option, optIndex) => (
+                      <li key={optIndex} style={{ 
+                        fontWeight: optIndex === question.correctAnswer ? '600' : 'normal',
+                        color: optIndex === question.correctAnswer ? '#10b981' : '#374151'
+                      }}>
+                        {String.fromCharCode(65 + optIndex)}. {option}
+                        {optIndex === question.correctAnswer && ' ✓'}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
-            {expandedQuestions.has(question.id) && (
+            {expandedQuestions.has(question.id) && !editingQuestions.has(question.id) && (
               <div className="explanation">
                 <h4 style={{ marginBottom: '8px', color: '#374151' }}>Explanation:</h4>
                 <p>{question.explanation}</p>
               </div>
             )}
 
-
-
             <div className="question-actions">
-              <button
-                onClick={() => updateQuestionStatus(question.id, 'approved')}
-                className="btn btn-success"
-                disabled={question.status === 'approved'}
-              >
-                <Check size={16} />
-                Approve
-              </button>
-              
-              <button
-                onClick={() => updateQuestionStatus(question.id, 'rejected')}
-                className="btn btn-danger"
-                disabled={question.status === 'rejected'}
-              >
-                <X size={16} />
-                Reject
-              </button>
-              
-              <button
-                onClick={() => regenerateQuestion(question.id)}
-                className="btn btn-secondary"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
+              {editingQuestions.has(question.id) ? (
+                // Edit mode buttons
+                <>
+                  <button
+                    onClick={() => saveEditing(question.id)}
+                    className="btn btn-success"
+                  >
+                    <Save size={16} />
+                    Save Changes
+                  </button>
+                  
+                  <button
+                    onClick={() => cancelEditing(question.id)}
+                    className="btn btn-danger"
+                  >
+                    <XCircle size={16} />
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                // Normal mode buttons
+                <>
+                  <button
+                    onClick={() => updateQuestionStatus(question.id, 'approved')}
+                    className="btn btn-success"
+                    disabled={question.status === 'approved'}
+                  >
+                    <Check size={16} />
+                    Approve
+                  </button>
+                  
+                  <button
+                    onClick={() => updateQuestionStatus(question.id, 'rejected')}
+                    className="btn btn-danger"
+                    disabled={question.status === 'rejected'}
+                  >
+                    <X size={16} />
+                    Reject
+                  </button>
+                  
+                  <button
+                    onClick={() => startEditing(question.id)}
+                    className="btn btn-secondary"
+                  >
+                    <Edit2 size={16} />
+                    Edit
+                  </button>
+                  
+                  <button
+                    onClick={() => regenerateQuestion(question.id)}
+                    className="btn btn-secondary"
+                  >
+                    <RefreshCw size={16} />
+                    Regenerate
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}
