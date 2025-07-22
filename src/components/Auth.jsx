@@ -32,10 +32,10 @@ export default function Auth() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
     }}>
@@ -43,7 +43,7 @@ export default function Auth() {
         <h1 style={{ textAlign: 'center', marginBottom: '32px', color: '#1e293b' }}>
           Aptitude Question Generator
         </h1>
-        
+
         <form onSubmit={handleAuth}>
           <div className="form-group">
             <label className="form-label">Email</label>
@@ -56,7 +56,7 @@ export default function Auth() {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label">Password</label>
             <input
@@ -68,26 +68,26 @@ export default function Auth() {
               required
             />
           </div>
-          
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+
+          <button
+            type="submit"
+            className="btn btn-primary"
             style={{ width: '100%', marginBottom: '16px' }}
             disabled={loading}
           >
             {loading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
           </button>
         </form>
-        
+
         <p style={{ textAlign: 'center', color: '#64748b' }}>
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              color: '#3b82f6', 
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#3b82f6',
               cursor: 'pointer',
               textDecoration: 'underline'
             }}
