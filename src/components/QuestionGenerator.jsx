@@ -47,7 +47,78 @@ export default function QuestionGenerator({ onQuestionsGenerated }) {
     const [loading, setLoading] = useState(false)
 
     const handleInputChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }))
+        setFormData(prev => {
+            const newData = { ...prev, [field]: value }
+            
+            // If total questions changed, adjust difficulty distribution
+            if (field === 'questionCount') {
+                const total = parseInt(value) || 0
+                const currentSum = newData.easyCount + newData.moderateCount + newData.hardCount
+                
+                if (currentSum > total) {
+                    // Proportionally reduce each difficulty to fit within total
+                    const ratio = total / currentSum
+                    newData.easyCount = Math.floor(newData.easyCount * ratio)
+                    newData.moderateCount = Math.floor(newData.moderateCount * ratio)
+                    newData.hardCount = Math.floor(newData.hardCount * ratio)
+                    
+                    // Distribute any remaining questions to maintain the total
+                    const newSum = newData.easyCount + newData.moderateCount + newData.hardCount
+                    const remaining = total - newSum
+                    
+                    if (remaining > 0) {
+                        // Add remaining questions to easy first, then moderate, then hard
+                        if (remaining >= 1 && newData.easyCount < total) newData.easyCount += Math.min(remaining, total - newData.easyCount)
+                        const afterEasy = newData.easyCount + newData.moderateCount + newData.hardCount
+                        if (total - afterEasy > 0 && newData.moderateCount < total) newData.moderateCount += Math.min(total - afterEasy, total - newData.moderateCount)
+                        const afterModerate = newData.easyCount + newData.moderateCount + newData.hardCount
+                        if (total - afterModerate > 0 && newData.hardCount < total) newData.hardCount += total - afterModerate
+                    }
+                }
+            }
+            
+            // If difficulty count changed, ensure it doesn't exceed total and adjust others if needed
+            if (['easyCount', 'moderateCount', 'hardCount'].includes(field)) {
+                const total = newData.questionCount
+                const newValue = Math.min(parseInt(value) || 0, total)
+                newData[field] = newValue
+                
+                // Check if total exceeds limit and adjust other fields
+                const currentSum = newData.easyCount + newData.moderateCount + newData.hardCount
+                if (currentSum > total) {
+                    const excess = currentSum - total
+                    
+                    // Reduce other difficulty levels proportionally
+                    if (field !== 'easyCount' && newData.easyCount > 0) {
+                        const reduceEasy = Math.min(excess, newData.easyCount)
+                        newData.easyCount -= reduceEasy
+                        const remaining = excess - reduceEasy
+                        
+                        if (remaining > 0 && field !== 'moderateCount' && newData.moderateCount > 0) {
+                            const reduceModerate = Math.min(remaining, newData.moderateCount)
+                            newData.moderateCount -= reduceModerate
+                            const stillRemaining = remaining - reduceModerate
+                            
+                            if (stillRemaining > 0 && field !== 'hardCount') {
+                                newData.hardCount -= Math.min(stillRemaining, newData.hardCount)
+                            }
+                        }
+                    } else if (field !== 'moderateCount' && newData.moderateCount > 0) {
+                        const reduceModerate = Math.min(excess, newData.moderateCount)
+                        newData.moderateCount -= reduceModerate
+                        const remaining = excess - reduceModerate
+                        
+                        if (remaining > 0 && field !== 'hardCount') {
+                            newData.hardCount -= Math.min(remaining, newData.hardCount)
+                        }
+                    } else if (field !== 'hardCount') {
+                        newData.hardCount -= Math.min(excess, newData.hardCount)
+                    }
+                }
+            }
+            
+            return newData
+        })
     }
 
     const generateQuestions = async () => {
