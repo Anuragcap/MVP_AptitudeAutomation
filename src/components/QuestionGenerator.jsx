@@ -170,6 +170,7 @@ Return the response as a JSON array with this exact structure:
                     correctAnswer: q.correctAnswer,
                     explanation: q.explanation,
                     status: 'pending',
+                    isStatusLocked: false,
                     isVariant: false,
                     baseQuestionId: null,
                     variantNumber: null
@@ -189,6 +190,7 @@ Return the response as a JSON array with this exact structure:
                             correctAnswer: v.correctAnswer,
                             explanation: v.explanation,
                             status: 'pending',
+                            isStatusLocked: false,
                             isVariant: true,
                             baseQuestionId: baseQuestion.id,
                             variantNumber: vIndex + 1

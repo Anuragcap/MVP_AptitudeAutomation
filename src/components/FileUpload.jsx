@@ -675,6 +675,7 @@ If you cannot parse the content, return an empty array []`
                     correctAnswer: baseQ.correctAnswer || 0,
                     explanation: baseQ.explanation || 'No explanation provided',
                     status: 'pending',
+                    isStatusLocked: false,
                     isVariant: false,
                     baseQuestionId: null,
                     variantNumber: null
@@ -746,6 +747,7 @@ Return as JSON array:
                                 correctAnswer: variant.correctAnswer,
                                 explanation: variant.explanation,
                                 status: 'pending',
+                                isStatusLocked: false,
                                 isVariant: true,
                                 baseQuestionId: originalQuestion.id,
                                 variantNumber: vIndex + 1

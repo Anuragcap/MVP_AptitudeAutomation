@@ -37,7 +37,7 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
     const newEditing = new Set(editingQuestions)
     newEditing.delete(questionId)
     setEditingQuestions(newEditing)
-    
+
     const newEditData = { ...editData }
     delete newEditData[questionId]
     setEditData(newEditData)
@@ -47,19 +47,20 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
     const editedData = editData[questionId]
     if (!editedData) return
 
-    const updatedQuestions = questions.map(q => 
-      q.id === questionId 
-        ? { 
-            ...q, 
-            question: editedData.question,
-            options: editedData.options,
-            correctAnswer: editedData.correctAnswer,
-            explanation: editedData.explanation,
-            status: 'pending'
-          }
+    const updatedQuestions = questions.map(q =>
+      q.id === questionId
+        ? {
+          ...q,
+          question: editedData.question,
+          options: editedData.options,
+          correctAnswer: editedData.correctAnswer,
+          explanation: editedData.explanation,
+          status: 'pending',
+          isStatusLocked: false
+        }
         : q
     )
-    
+
     onQuestionsUpdate(updatedQuestions)
     cancelEditing(questionId)
     toast.success('Question updated successfully!')
@@ -82,11 +83,11 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
   }
 
   const updateQuestionStatus = (questionId, status) => {
-    const updatedQuestions = questions.map(q => 
-      q.id === questionId ? { ...q, status } : q
+    const updatedQuestions = questions.map(q =>
+      q.id === questionId ? { ...q, status, isStatusLocked: true } : q
     )
     onQuestionsUpdate(updatedQuestions)
-    
+
     const statusMessages = {
       approved: 'Question approved!',
       rejected: 'Question rejected',
@@ -97,11 +98,11 @@ export default function QuestionReview({ questions, onQuestionsUpdate }) {
 
   const regenerateQuestion = async (questionId) => {
     toast.loading('Regenerating question...', { id: questionId })
-    
+
     try {
       const { OPENAI_API_KEY } = await import('../lib/supabase')
       const questionToRegenerate = questions.find(q => q.id === questionId)
-      
+
       if (!questionToRegenerate) {
         throw new Error('Question not found')
       }
@@ -162,22 +163,23 @@ Return as JSON with this structure:
         throw new Error('Invalid JSON response from AI')
       }
 
-      const updatedQuestions = questions.map(q => 
-        q.id === questionId 
-          ? { 
-              ...q, 
-              question: newQuestionData.question,
-              options: newQuestionData.options,
-              correctAnswer: newQuestionData.correctAnswer,
-              explanation: newQuestionData.explanation,
-              status: 'pending'
-            }
+      const updatedQuestions = questions.map(q =>
+        q.id === questionId
+          ? {
+            ...q,
+            question: newQuestionData.question,
+            options: newQuestionData.options,
+            correctAnswer: newQuestionData.correctAnswer,
+            explanation: newQuestionData.explanation,
+            status: 'pending',
+            isStatusLocked: false
+          }
           : q
       )
-      
+
       onQuestionsUpdate(updatedQuestions)
       toast.success('Question regenerated with AI!', { id: questionId })
-      
+
     } catch (error) {
       console.error('Regeneration error:', error)
       toast.error(`Failed to regenerate: ${error.message}`, { id: questionId })
@@ -187,7 +189,7 @@ Return as JSON with this structure:
   // Helper function to convert text to LaTeX format
   const convertToLatex = (text) => {
     if (!text) return text
-    
+
     return text
       .replace(/\b(\d+)\/(\d+)\b/g, '$\\frac{$1}{$2}$') // Fractions like 3/4 -> $\frac{3}{4}$
       .replace(/\b(\d+)\^(\d+)\b/g, '$\\$1^{$2}$') // Powers like 2^3 -> $2^{3}$
@@ -214,7 +216,7 @@ Return as JSON with this structure:
 
   const exportToGoogleSheets = () => {
     const approvedQuestions = questions.filter(q => q.status === 'approved')
-    
+
     if (approvedQuestions.length === 0) {
       toast.error('No approved questions to export')
       return
@@ -253,7 +255,7 @@ Return as JSON with this structure:
     a.download = `aptitude_questions_${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
-    
+
     toast.success(`Exported ${approvedQuestions.length} questions to CSV with LaTeX formatting`)
   }
 
@@ -288,7 +290,7 @@ Return as JSON with this structure:
               <span style={{ color: '#f59e0b' }}>Pending: <strong>{statusCounts.pending}</strong></span>
             </div>
           </div>
-          
+
           <button
             onClick={exportToGoogleSheets}
             className="btn btn-success"
@@ -321,7 +323,7 @@ Return as JSON with this structure:
                   </span>
                 )}
               </div>
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {question.status === 'approved' && (
                   <span style={{ color: '#10b981', fontSize: '14px', fontWeight: '500' }}>✓ Approved</span>
@@ -353,7 +355,7 @@ Return as JSON with this structure:
                       style={{ resize: 'vertical' }}
                     />
                   </div>
-                  
+
                   <div className="form-group">
                     <label className="form-label">Options:</label>
                     {editData[question.id]?.options?.map((option, optIndex) => (
@@ -377,7 +379,7 @@ Return as JSON with this structure:
                       </div>
                     ))}
                   </div>
-                  
+
                   {expandedQuestions.has(question.id) && (
                     <div className="form-group">
                       <label className="form-label">Explanation:</label>
@@ -397,10 +399,10 @@ Return as JSON with this structure:
                   <p style={{ fontSize: '16px', lineHeight: '1.6', marginBottom: '12px' }}>
                     {question.question}
                   </p>
-                  
+
                   <ul className="options-list">
                     {question.options.map((option, optIndex) => (
-                      <li key={optIndex} style={{ 
+                      <li key={optIndex} style={{
                         fontWeight: optIndex === question.correctAnswer ? '600' : 'normal',
                         color: optIndex === question.correctAnswer ? '#10b981' : '#374151'
                       }}>
@@ -431,7 +433,7 @@ Return as JSON with this structure:
                     <Save size={16} />
                     Save Changes
                   </button>
-                  
+
                   <button
                     onClick={() => cancelEditing(question.id)}
                     className="btn btn-danger"
@@ -446,21 +448,29 @@ Return as JSON with this structure:
                   <button
                     onClick={() => updateQuestionStatus(question.id, 'approved')}
                     className="btn btn-success"
-                    disabled={question.status === 'approved'}
+                    disabled={question.isStatusLocked && question.status === 'approved'}
+                    style={{
+                      opacity: (question.isStatusLocked && question.status === 'approved') ? 0.5 : 1,
+                      cursor: (question.isStatusLocked && question.status === 'approved') ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     <Check size={16} />
                     Approve
                   </button>
-                  
+
                   <button
                     onClick={() => updateQuestionStatus(question.id, 'rejected')}
                     className="btn btn-danger"
-                    disabled={question.status === 'rejected'}
+                    disabled={question.isStatusLocked && question.status === 'rejected'}
+                    style={{
+                      opacity: (question.isStatusLocked && question.status === 'rejected') ? 0.5 : 1,
+                      cursor: (question.isStatusLocked && question.status === 'rejected') ? 'not-allowed' : 'pointer'
+                    }}
                   >
                     <X size={16} />
                     Reject
                   </button>
-                  
+
                   <button
                     onClick={() => startEditing(question.id)}
                     className="btn btn-secondary"
@@ -468,7 +478,7 @@ Return as JSON with this structure:
                     <Edit2 size={16} />
                     Edit
                   </button>
-                  
+
                   <button
                     onClick={() => regenerateQuestion(question.id)}
                     className="btn btn-secondary"
