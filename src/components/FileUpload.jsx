@@ -124,6 +124,10 @@ export default function FileUpload({ onQuestionsGenerated }) {
 
             // For AI processing, we'll ask it to extract and understand the document
             const { OPENAI_API_KEY } = await import('../lib/supabase')
+            
+            if (!OPENAI_API_KEY) {
+                throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+            }
 
             const prompt = `I have uploaded a ${fileExtension.toUpperCase()} document named "${file.name}". 
             
@@ -239,6 +243,10 @@ Return the content in a clear, structured format that can be used for question g
     const generateQuestionsFromContent = async (content) => {
         try {
             const { OPENAI_API_KEY } = await import('../lib/supabase')
+            
+            if (!OPENAI_API_KEY) {
+                throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+            }
 
             const prompt = `Based on the following study material, generate 5-8 high-quality multiple choice questions that test understanding of the key concepts.
 
@@ -593,6 +601,10 @@ Please return a JSON array of questions with this structure:
     const parseWithAI = async (content) => {
         try {
             const { OPENAI_API_KEY } = await import('../lib/supabase')
+            
+            if (!OPENAI_API_KEY) {
+                throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+            }
 
             const prompt = `Parse the following content and extract questions in JSON format. 
       
@@ -662,6 +674,11 @@ If you cannot parse the content, return an empty array []`
 
         try {
             const { OPENAI_API_KEY } = await import('../lib/supabase')
+            
+            if (!OPENAI_API_KEY) {
+                throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+            }
+            
             const allQuestions = []
 
             for (const [index, baseQ] of parsedQuestions.entries()) {

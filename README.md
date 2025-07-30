@@ -37,12 +37,22 @@ An AI-powered platform for creating, reviewing, and managing aptitude questions 
 
 ### 3. Environment Configuration
 
-1. Update `src/lib/supabase.js` with your Supabase credentials:
-```javascript
-const supabaseUrl = 'YOUR_SUPABASE_URL'
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'
-export const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'
+1. Copy the example environment file:
+```bash
+cp .env.example .env
 ```
+
+2. Update `.env` with your actual credentials:
+```bash
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# OpenAI Configuration
+VITE_OPENAI_API_KEY=your_openai_api_key
+```
+
+**Important**: Never commit your `.env` file to version control. It's already included in `.gitignore`.
 
 ### 4. Installation
 
@@ -144,9 +154,10 @@ The app integrates with OpenAI GPT-4 for:
 ## Production Considerations
 
 ### Security
-- Implement proper API key management (environment variables)
+- ✅ API keys are now managed through environment variables
 - Add rate limiting for AI API calls
 - Validate user inputs and sanitize data
+- Consider moving OpenAI API calls to a backend service for production
 
 ### Performance
 - Add caching for frequently accessed topics/subtopics

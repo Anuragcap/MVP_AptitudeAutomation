@@ -145,6 +145,10 @@ export default function QuestionGenerator({ onQuestionsGenerated }) {
     // Real OpenAI integration
     const generateQuestionsWithAI = async (config) => {
         const { OPENAI_API_KEY } = await import('../lib/supabase')
+        
+        if (!OPENAI_API_KEY) {
+            throw new Error('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file.')
+        }
 
         const difficulties = [
             ...Array(config.easyCount).fill('easy'),
