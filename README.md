@@ -185,6 +185,3 @@ For issues and questions:
 3. Review browser console for error messages
 4. Ensure all dependencies are installed correctly
 
-## License
-
-This project is built for internal use at NxtWave EdTech. All rights reserved.
